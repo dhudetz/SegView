@@ -13,8 +13,9 @@ from scipy.ndimage import sobel
 
 def showDrawing(event):
     threshold=thresholdScale.get()
-#    startTime=time.time()
-    imageArray=np.array(file.get(list(file.items())[1][0])[imageScale.get(),:,:])
+    startTime=time.time()
+    imageArray=np.array(dataSet[imageScale.get(),:,:])
+    dimension=imageArray[0].size
     imageArray=(imageArray-imageArray.min())/(imageArray.max()-imageArray.min())*threshold/255
     maskArray=np.array(file.get(list(file.items())[0][0])[imageScale.get(),...])
     maskArray=sobel(maskArray)
@@ -25,10 +26,7 @@ def showDrawing(event):
         finalArray=np.rint(imageArray*255)
     else:
         imageArray=np.rint(imageArray*255)
-        rgbArray = np.zeros((960,960,3), 'uint8')     
-#        imgArr = np.zeros((512,512))
-#        imgArr = imgArr[...,np.newaxis]
-#        imgArr = np.concatenate([imgArr, 20*imgArr, 30*imgArr], axis = 2)
+        rgbArray = np.zeros((dimension,dimension,3), 'uint8')     
         rgbArray[..., 0] = imageArray+maskArray*(255-thresholdScale.get())
         rgbArray[..., 1] = imageArray
         rgbArray[..., 2] = imageArray
@@ -39,7 +37,7 @@ def showDrawing(event):
 
     window.dontDeleteMePlease=img
     canvas.create_image(pixelWidth, pixelHeight, image=img)
-#    print(time.time()-startTime)
+    print(time.time()-startTime)
 
 fileLocation="\\\\wales.es.anl.gov\\DataArchive\\Software\\SegView\\sample_data\dataset_01.hdf5"
 groupNumber=1
@@ -55,7 +53,12 @@ screen0.pack()
 pixelWidth=400
 pixelHeight=400
 
-imageScale=t.Scale(screen0, from_=0, to=344, resolution=1, orient=t.HORIZONTAL, length=500)
+print('Loading data...')
+file=hdf.File(fileLocation, 'r')
+dataSet=file.get(list(file.items())[1][0])
+print('Finished loading.')
+
+imageScale=t.Scale(screen0, from_=0, to=dataSet.len()-1, resolution=1, orient=t.HORIZONTAL, length=500)
 imageScale.grid(row=2, column=0)
 imageScale.bind("<ButtonRelease-1>", showDrawing)
 imageScale.bind("<Motion>", showDrawing)
@@ -75,9 +78,6 @@ minmaxLabel.grid(row=1, column=0)
 
 canvas=t.Canvas(screen0, width=pixelWidth*2, height=pixelHeight*2)
 canvas.grid(row=0, column=0)
-print('Loading data...')
-file=hdf.File(fileLocation, 'r')
-print('Finished loading.')
 
 window.mainloop()
 file.close()
